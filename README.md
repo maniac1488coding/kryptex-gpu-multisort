@@ -1,5 +1,8 @@
 # Kryptex GPU — мультисортировка
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%E2%89%A5%2018-brightgreen.svg)](package.json)
+
 Веб-таблица видеокарт для майнинга на живых данных [Kryptex](https://pool.kryptex.com/ru/device/gpu),
 которая умеет то, чего нет в оригинале: **показывать карты, лучшие сразу по нескольким критериям**
 (доход, хэшрейт, мощность, окупаемость, прибыль, эффективность).

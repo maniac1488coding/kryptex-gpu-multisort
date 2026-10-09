@@ -208,7 +208,10 @@ function referenceOrder(rows, mode, criteria, tolerance = 10) {
   const indexColVisible = () => !doc.getElementById('table').classList.contains('hide-index');
 
   console.log('\n=== Базовый рендер ===');
-  ok(rows().length === 135, `строк: ${rows().length}`);
+  const TOTAL = allRows.length; // актуальное число карт у Kryptex, не константа
+  ok(rows().length === TOTAL, `строк: ${rows().length} (столько же, сколько в данных Kryptex)`);
+  const counter = doc.getElementById('resultCount').textContent;
+  ok(new RegExp(`Показано ${TOTAL} из ${TOTAL} GPU`).test(counter), `счётчик: "${counter}"`);
   ok(doc.getElementById('mode').value === 'weighted', 'режим по умолчанию — взвешенный компромисс');
   ok(indexColVisible(), 'колонка «Индекс» видна во взвешенном режиме');
   ok(chipWeights().length === 2, `ползунки веса отрисованы: ${chipWeights().join(', ')}`);
@@ -243,7 +246,7 @@ function referenceOrder(rows, mode, criteria, tolerance = 10) {
     const shown = Number(cell(tr, 12).replace(/[^\d]/g, ''));
     if (refByName.get(nm) !== shown) mismatches++;
   });
-  ok(mismatches === 0, `индекс во всех 135 строках совпал с эталоном (расхождений: ${mismatches})`);
+  ok(mismatches === 0, `индекс во всех ${TOTAL} строках совпал с эталоном (расхождений: ${mismatches})`);
   const idxSeq = rows().map((tr) => Number(cell(tr, 12).replace(/[^\d]/g, '')));
   ok(idxSeq.every((v, i) => i === 0 || idxSeq[i - 1] >= v), 'индекс убывает сверху вниз');
 
@@ -402,7 +405,7 @@ function referenceOrder(rows, mode, criteria, tolerance = 10) {
   const bdRows = [...detail.querySelectorAll('table')].find((t) => /Из чего|Критерий/.test(t.closest('h4')?.textContent || ''));
   const critRows = detail.querySelectorAll('table')[0].querySelectorAll('tbody tr').length;
   ok(critRows === 2, `строк в расшифровке: ${critRows} (= числу критериев)`);
-  ok(/\d+ из 135/.test(detail.textContent), 'указаны места по каждому критерию');
+  ok(new RegExp(`\\d+ из ${TOTAL}`).test(detail.textContent), 'указаны места по каждому критерию');
   click(doc.getElementById('detailClose'));
   await sleep(150);
 

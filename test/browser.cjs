@@ -47,12 +47,16 @@ const ok = (cond, msg) => {
     if (m.type() === 'error') errors.push(m.text());
   });
 
+  // ожидаемое число карт берём из API — иначе тест сломается, когда Kryptex добавит новую
+  const api = await (await fetch(`${BASE}/api/data`)).json();
+  const TOTAL = api.count;
+
   await page.goto(BASE + '/', { waitUntil: 'networkidle' });
   await page.waitForSelector('#tbody tr');
   await page.waitForTimeout(700);
 
   console.log('\n=== Страница и режимы ===');
-  ok((await page.locator('#tbody tr').count()) === 135, 'отрисовано 135 строк');
+  ok((await page.locator('#tbody tr').count()) === TOTAL, `отрисовано ${TOTAL} строк (как в данных Kryptex)`);
   ok(!(await page.locator('#tolWrap').isVisible()), 'поле допуска скрыто в режиме компромисса');
   ok(await page.locator('.col-index').first().isVisible(), 'колонка «Индекс» видна');
 
@@ -101,7 +105,7 @@ const ok = (cond, msg) => {
   await download.saveAs(csvPath);
   const csv = fs.readFileSync(csvPath, 'utf8');
   const lines = csv.trim().split('\r\n');
-  ok(lines.length === 136, `строк в CSV: ${lines.length} (шапка + 135)`);
+  ok(lines.length === TOTAL + 1, `строк в CSV: ${lines.length} = шапка + ${TOTAL}`);
   ok(/Индекс баланса/.test(lines[0]), 'в CSV есть колонка «Индекс баланса»');
   ok(lines[1].split(';').length === 15, `колонок: ${lines[1].split(';').length}`);
   ok(/GeForce|Radeon|ARC|CMP|H100|B200|MI/.test(lines[1]), `первая строка: ${lines[1].slice(0, 90)}…`);

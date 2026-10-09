@@ -158,7 +158,11 @@ ensure_node() {
     install_node
     ok "node $(node -v)"
   fi
-  have npm && ok "npm $(npm -v)" || warn "npm не найден — зависимости ставить не буду (приложению они не нужны)"
+  if have npm; then
+    ok "npm $(npm -v)"
+  else
+    warn "npm не найден — зависимости ставить не буду (приложению они не нужны)"
+  fi
 }
 
 # ---------------------------------------------------------------- код
@@ -313,8 +317,7 @@ health_check() {
   url="http://${probe_host}:${PORT}/api/health"
 
   step "Проверяю, что веб-интерфейс отвечает"
-  local i
-  for i in $(seq 1 30); do
+  for _ in $(seq 1 30); do
     if have curl && curl -fsS --max-time 2 "$url" >/dev/null 2>&1; then
       ok "отвечает: $url"
       return 0
