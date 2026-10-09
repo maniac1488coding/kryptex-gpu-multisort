@@ -1,0 +1,20 @@
+# зависимости и артефакты тестов
+node_modules/
+npm-debug.log*
+package-lock.json.bak
+test/export.csv
+
+# рантайм
+server.pid
+server.log
+*.log
+
+# материалы разведки и скриншоты тестов (в т. ч. дампы payload Kryptex — не наш контент)
+recon/
+
+# редакторы и ОС
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

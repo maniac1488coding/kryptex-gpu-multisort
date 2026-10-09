@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPU для майнинга — мультисортировка по Kryptex</title>
+<meta name="description" content="Таблица видеокарт для майнинга с данными Kryptex и одновременной сортировкой по нескольким критериям: доход, хэшрейт, мощность, окупаемость, прибыль, эффективность.">
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛏️</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">⛏️</span>
+    <div>
+      <h1>GPU для майнинга <span class="accent">· мультисортировка</span></h1>
+      <p class="sub">Данные <a href="https://pool.kryptex.com/ru/device/gpu" target="_blank" rel="noopener">pool.kryptex.com</a> · карты, лучшие сразу по нескольким критериям</p>
+    </div>
+  </div>
+  <div class="status">
+    <div class="status-line"><span class="dot" id="statusDot"></span><span id="statusText">загрузка…</span></div>
+    <button id="refreshBtn" class="btn ghost" type="button">Обновить</button>
+  </div>
+</header>
+
+<section class="panel controls">
+  <div class="control">
+    <label for="q">Поиск модели</label>
+    <input id="q" type="search" placeholder="напр. 4070, RX 6800" autocomplete="off">
+  </div>
+  <div class="control">
+    <label for="brand">Бренд</label>
+    <select id="brand"><option value="">Все</option></select>
+  </div>
+  <div class="control">
+    <label for="algo">Алгоритм</label>
+    <select id="algo"><option value="">Все</option></select>
+  </div>
+  <div class="control">
+    <label for="ticker">Монета</label>
+    <select id="ticker"><option value="">Все</option></select>
+  </div>
+  <div class="control">
+    <label for="kwh" title="Стоимость электроэнергии, долларов за кВт·ч">Электричество, $/кВт·ч</label>
+    <input id="kwh" type="number" min="0" max="2" step="0.01" value="0.04">
+  </div>
+  <div class="control">
+    <label for="currency">Валюта</label>
+    <select id="currency"></select>
+  </div>
+  <div class="control">
+    <label for="period">Период дохода</label>
+    <select id="period">
+      <option value="1">День</option>
+      <option value="30">Месяц</option>
+      <option value="365">Год</option>
+    </select>
+  </div>
+  <div class="control range">
+    <label for="maxPrice">Цена до, <span id="maxPriceOut">∞</span></label>
+    <input id="maxPrice" type="range" min="0" max="40000" step="50" value="40000">
+  </div>
+  <div class="control range">
+    <label for="maxPower">Мощность до, <span id="maxPowerOut">∞</span> Вт</label>
+    <input id="maxPower" type="range" min="0" max="1500" step="10" value="1500">
+  </div>
+  <div class="control check">
+    <label><input id="onlyProfitable" type="checkbox"> Только прибыльные</label>
+  </div>
+</section>
+
+<section class="panel sorter">
+  <div class="sorter-head">
+    <h2>Как сравнивать карты</h2>
+    <div class="sorter-actions">
+      <button id="addSort" class="btn" type="button">+ Добавить критерий</button>
+      <button id="clearSort" class="btn ghost" type="button">Сбросить</button>
+    </div>
+  </div>
+
+  <div class="mode-row">
+    <div class="mode-pick">
+      <label for="mode">Режим сравнения</label>
+      <select id="mode">
+        <option value="weighted">Взвешенный компромисс</option>
+        <option value="tolerance">Допуск от лучшего</option>
+        <option value="strict">Строгий приоритет</option>
+      </select>
+    </div>
+    <div class="mode-pick" id="tolWrap">
+      <label for="tolerance">Допуск к лучшему, %</label>
+      <input id="tolerance" type="number" min="0.5" max="50" step="0.5" value="10">
+    </div>
+    <p id="modeHint" class="mode-hint"></p>
+  </div>
+
+  <div id="sortChips" class="chips"></div>
+
+  <div class="presets">
+    <span class="presets-label">Пресеты:</span>
+    <button class="btn tiny" data-preset="revenue_payback">Доход + окупаемость</button>
+    <button class="btn tiny" data-preset="revenue_tolerance">Доход + окупаемость (допуск)</button>
+    <button class="btn tiny" data-preset="balance">Лучший баланс</button>
+    <button class="btn tiny" data-preset="payback">Быстрая окупаемость</button>
+    <button class="btn tiny" data-preset="profit">Макс. прибыль</button>
+    <button class="btn tiny" data-preset="efficiency">Энергоэффективность</button>
+    <button class="btn tiny" data-preset="cheap">Дешёвый старт</button>
+    <button class="btn tiny" data-preset="strict">Как на Kryptex (строго)</button>
+  </div>
+  <p class="tip">Клик по заголовку колонки — сортировать по нему; <kbd>Shift</kbd>+клик — добавить как ещё один критерий. № в чипе — приоритет, «вес» — насколько критерий важен в режиме компромисса.</p>
+</section>
+
+<section class="panel tablepanel">
+  <div class="table-toolbar">
+    <span id="resultCount" class="muted">—</span>
+    <div>
+      <button id="exportBtn" class="btn ghost" type="button">CSV</button>
+      <button id="linkBtn" class="btn ghost" type="button">Ссылка на выборку</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table id="table">
+      <thead>
+        <tr>
+          <th class="col-rank" title="Позиция в текущей сортировке">#</th>
+          <th data-sort="name" class="left">Модель</th>
+          <th data-sort="hashrate" class="num">Хэшрейт</th>
+          <th data-sort="ticker">Монета</th>
+          <th data-sort="power" class="num">Мощность</th>
+          <th data-sort="jPerHash" class="num">J/H</th>
+          <th data-sort="dollarPerHash" class="num">$/H</th>
+          <th data-sort="efficiency" class="num">Эфф-ть</th>
+          <th data-sort="price" class="num">Цена</th>
+          <th data-sort="revenue" class="num">Доход</th>
+          <th data-sort="profit" class="num">Прибыль</th>
+          <th data-sort="payback" class="num">Окупаемость</th>
+          <th data-sort="index" class="num col-index" title="Индекс баланса: 100 — карта в числе лучших по всем выбранным критериям">Индекс</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<aside id="detail" class="detail" hidden>
+  <button id="detailClose" class="btn ghost detail-close" type="button">✕</button>
+  <div id="detailBody"></div>
+</aside>
+
+<div id="toast" class="toast" hidden></div>
+
+<footer class="foot">
+  <span>Источник данных: Kryptex (обновление ~раз в час). Доход, прибыль, окупаемость, эффективность и индекс считаются локально.</span>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>
